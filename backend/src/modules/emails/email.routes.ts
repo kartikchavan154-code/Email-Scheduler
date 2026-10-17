@@ -6,6 +6,7 @@ import { prisma } from '../../config/prisma';
 import { SchedulingService } from '../scheduling/scheduling.service';
 import { RecipientParser } from '../../utils/csv-parser';
 import { AuthService } from '../auth/auth.service';
+import { ElasticsearchService } from '../search/elasticsearch.service';
 import { logger } from '../../config/logger';
 
 const upload = multer({
