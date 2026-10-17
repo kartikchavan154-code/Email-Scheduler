@@ -2,10 +2,15 @@ import Redis, { RedisOptions } from 'ioredis';
 import { env } from './env';
 import { logger } from './logger';
 
+// Detect Upstash TLS (rediss://) vs local Redis (redis://)
+const isTLS = env.REDIS_URL.startsWith('rediss://');
+
 export const getRedisOptions = (): RedisOptions => ({
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   lazyConnect: true,
+  // Upstash requires TLS — pass tls:{} when scheme is rediss://
+  ...(isTLS ? { tls: { rejectUnauthorized: false } } : {}),
   retryStrategy(times) {
     const delay = Math.min(times * 100, 3000);
     return delay;
@@ -23,7 +28,7 @@ export const createRedisClient = (customName?: string): Redis => {
   });
 
   client.on('connect', () => {
-    logger.info({ name: customName || 'reachinbox_redis' }, 'Connected to Redis successfully');
+    logger.info({ name: customName || 'reachinbox_redis', tls: isTLS }, 'Connected to Redis successfully');
   });
 
   client.on('error', (err) => {
