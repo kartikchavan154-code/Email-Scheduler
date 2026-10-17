@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Slack, CheckCircle, AlertCircle, Send, Unlink, Key } from 'lucide-react';
+import { Slack, CheckCircle, AlertCircle, Send, Unlink, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { SlackStatus } from '../types';
 
 export const SlackSettingsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [status, setStatus] = useState<SlackStatus>({ connected: false });
-  const [loading, setLoading] = useState<boolean>(false);
   const [testSending, setTestSending] = useState<boolean>(false);
   const [notificationMsg, setNotificationMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const fetchSlackStatus = async () => {
-    setLoading(true);
     try {
       const res = await api.get('/slack/status');
       if (res.data.success) {
@@ -18,8 +18,6 @@ export const SlackSettingsPage: React.FC = () => {
       }
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -37,7 +35,7 @@ export const SlackSettingsPage: React.FC = () => {
       await api.post('/slack/disconnect');
       setNotificationMsg({ type: 'success', text: 'Slack disconnected successfully' });
       fetchSlackStatus();
-    } catch (e: any) {
+    } catch {
       setNotificationMsg({ type: 'error', text: 'Failed to disconnect Slack' });
     }
   };
@@ -58,7 +56,7 @@ export const SlackSettingsPage: React.FC = () => {
     } catch (e: any) {
       setNotificationMsg({
         type: 'error',
-        text: e.response?.data?.error?.message || e.message || 'Error triggering Slack alert',
+        text: e.response?.data?.error?.message || 'Could not dispatch Slack message. Ensure Slack bot token is configured.',
       });
     } finally {
       setTestSending(false);
@@ -66,142 +64,109 @@ export const SlackSettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="pb-2 border-b border-slate-800 flex items-center justify-between">
+    <div className="p-6 max-w-4xl mx-auto space-y-6 bg-white min-h-full">
+      <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+        <button
+          type="button"
+          onClick={() => navigate('/scheduled')}
+          className="p-1.5 -ml-1 text-gray-500 hover:text-black rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2.5">
-            <Slack className="w-5 h-5 text-indigo-400" />
+          <h1 className="text-lg sm:text-xl font-bold text-[#111827] flex items-center gap-2">
+            <Slack className="w-5 h-5 text-[#00A854]" />
             Slack Rate-Limit Notifications
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Automated real-time Block Kit notifications dispatched when any sender identity hits its hourly quota
+          <p className="text-xs text-gray-400 mt-0.5">
+            Real-time Block Kit interactive alert broadcasts when an email sender breaches Redis hourly limits
           </p>
         </div>
-        <button
-          onClick={fetchSlackStatus}
-          disabled={loading}
-          title="Refresh Slack Status"
-          className="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/80 border border-slate-700/60"
-        >
-          {loading ? '...' : 'Refresh'}
-        </button>
       </div>
 
       {notificationMsg && (
         <div
-          className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+          className={`p-3.5 rounded-xl text-xs flex items-center gap-2 ${
             notificationMsg.type === 'success'
-              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+              : 'bg-rose-50 text-rose-800 border border-rose-200'
           }`}
         >
           {notificationMsg.type === 'success' ? (
-            <CheckCircle className="w-4 h-4 shrink-0" />
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
           ) : (
-            <AlertCircle className="w-4 h-4 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
           )}
           <span>{notificationMsg.text}</span>
         </div>
       )}
 
-      {/* Main Connection Card */}
-      <div className="bg-[#111827]/70 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Integration Card */}
+      <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-5">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Slack className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-xl bg-[#E6F4EA] flex items-center justify-center">
+              <Slack className="w-6 h-6 text-[#00A854]" />
             </div>
             <div>
-              <h3 className="font-semibold text-base text-white">Slack Workspace Integration</h3>
-              <p className="text-xs text-slate-400">
+              <h2 className="text-sm font-bold text-[#111827]">
+                Slack Workspace Connection
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
                 {status.connected
-                  ? `Connected to ${status.workspaceName || 'Slack Team'}`
-                  : 'No Slack workspace connected'}
+                  ? `Connected to ${status.workspaceName || 'Slack Workspace'}`
+                  : 'Receive team alerts whenever sender limits are exceeded'}
               </p>
             </div>
           </div>
 
-          <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium self-start sm:self-auto ${
-              status.connected
-                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                : 'bg-slate-800 text-slate-400 border border-slate-700'
-            }`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                status.connected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
-              }`}
-            ></span>
-            {status.connected ? 'Live & Connected' : 'Disconnected'}
-          </span>
+          <div>
+            {status.connected ? (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                  Connected
+                </span>
+                <button
+                  onClick={handleDisconnectSlack}
+                  className="p-1.5 text-gray-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                  title="Disconnect Slack"
+                >
+                  <Unlink className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleConnectSlack}
+                className="py-2 px-5 rounded-full border border-[#00A854] text-[#00A854] hover:bg-[#E6F4EA]/40 text-xs font-semibold transition-all cursor-pointer"
+              >
+                Connect Slack
+              </button>
+            )}
+          </div>
         </div>
 
-        {status.connected ? (
-          <div className="space-y-4 pt-4 border-t border-slate-800">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
-                <span className="text-slate-500 block">Workspace ID</span>
-                <span className="font-mono text-slate-200">{status.workspaceId}</span>
-              </div>
-              <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
-                <span className="text-slate-500 block">Destination Channel</span>
-                <span className="font-mono text-slate-200">
-                  {status.channelId || 'Default (#general)'}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <button
-                onClick={handleSendTestMessage}
-                disabled={testSending}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-glow transition-all"
-              >
-                <Send className="w-3.5 h-3.5" />
-                {testSending ? 'Sending Live Alert...' : 'Send Test Rate-Limit Alert'}
-              </button>
-              <button
-                onClick={handleDisconnectSlack}
-                className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-semibold transition-colors"
-              >
-                <Unlink className="w-3.5 h-3.5" />
-                Disconnect Workspace
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4 pt-4 border-t border-slate-800">
-            <p className="text-xs text-slate-300 leading-relaxed">
-              When a sender identity reaches its hourly dispatch ceiling (e.g. 200 emails/hour), our
-              distributed Redis coordination engine flags the state transition and automatically
-              posts an instant Slack Block Kit summary to your designated team channel.
+        {/* Test Alert Dispatch */}
+        <div className="pt-4 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h3 className="text-xs font-semibold text-[#111827]">
+              Dispatch Test Rate-Limit Alert
+            </h3>
+            <p className="text-[11px] text-gray-400 mt-0.5">
+              Simulates a 429 quota exhaustion event and sends a formatted Block Kit notification
             </p>
-
-            <button
-              onClick={handleConnectSlack}
-              className="flex items-center gap-2.5 px-5 py-2.5 bg-[#4A154B] hover:bg-[#611f69] text-white rounded-xl text-xs font-semibold shadow-lg transition-all"
-            >
-              <Slack className="w-4 h-4" />
-              Connect with Slack
-            </button>
           </div>
-        )}
-      </div>
-
-      {/* Instructions & Credentials Documentation */}
-      <div className="bg-[#111827]/50 border border-slate-800 rounded-2xl p-6 space-y-3 text-xs text-slate-400">
-        <h4 className="font-semibold text-slate-200 flex items-center gap-2">
-          <Key className="w-4 h-4 text-indigo-400" />
-          Slack App Configuration Instructions
-        </h4>
-        <ol className="list-decimal pl-5 space-y-1.5 leading-relaxed">
-          <li>Create a Slack App at <code className="text-indigo-300">api.slack.com/apps</code>.</li>
-          <li>Under <strong>OAuth & Permissions</strong>, add redirect URL: <code className="text-indigo-300">http://localhost:5000/api/slack/callback</code>.</li>
-          <li>Add Bot Token Scopes: <code className="text-indigo-300">chat:write</code>, <code className="text-indigo-300">chat:write.public</code>, <code className="text-indigo-300">incoming-webhook</code>.</li>
-          <li>Set <code className="text-indigo-300">SLACK_CLIENT_ID</code> and <code className="text-indigo-300">SLACK_CLIENT_SECRET</code> in <code className="text-indigo-300">backend/.env</code>.</li>
-        </ol>
+          <button
+            onClick={handleSendTestMessage}
+            disabled={testSending}
+            className="flex items-center gap-2 py-2 px-4 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-800 text-xs font-semibold border border-gray-200 transition-colors disabled:opacity-50"
+          >
+            <Send className="w-3.5 h-3.5 text-[#00A854]" />
+            {testSending ? 'Sending Alert...' : 'Send Test Notification'}
+          </button>
+        </div>
       </div>
     </div>
   );
 };
+export default SlackSettingsPage;

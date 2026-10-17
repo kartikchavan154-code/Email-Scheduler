@@ -30,3 +30,9 @@ backend/prisma/*.db-journal
 Thumbs.db
 .vscode/
 .idea/
+
+# Local databases and binaries
+backend/data/
+bin/
+*.pdb
+

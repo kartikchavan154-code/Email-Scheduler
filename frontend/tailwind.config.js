@@ -8,18 +8,31 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+        onb: {
+          green: '#00A854',
+          'green-hover': '#00964B',
+          'green-light': '#E6F4EA',
+          'green-subtle': '#E8F5E9',
+          'green-pill': '#E8F5E9',
+          'peach-bg': '#FEF3E2',
+          'peach-text': '#D97706',
+          'input-bg': '#F3F4F6',
+          'card-border': '#EAECF0',
+          'text-primary': '#111827',
+          'text-secondary': '#6B7280',
+          'text-muted': '#9CA3AF',
+        },
+        latte: {
+          50: '#FAF7F2',
+          100: '#F4ECE1',
+          200: '#E8DCCF',
+          300: '#D9C8B5',
+          400: '#BFAB95',
+          500: '#8C6239',
+          600: '#78532F',
+          700: '#644425',
+          800: '#4F351D',
+          900: '#2D231B',
         },
         dark: {
           bg: '#0B0F17',

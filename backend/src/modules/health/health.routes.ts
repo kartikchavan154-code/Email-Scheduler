@@ -28,26 +28,32 @@ router.get('/ready', async (req: Request, res: Response) => {
     elasticsearch: 'down',
   };
 
+  const timeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
+    Promise.race([
+      promise,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Connection timed out')), ms)),
+    ]);
+
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await timeout(prisma.$queryRaw`SELECT 1`, 2000);
     checks.database = 'healthy';
   } catch (err: any) {
-    checks.database = `unhealthy: ${err.message}`;
+    checks.database = `unhealthy (${err.message})`;
   }
 
   try {
-    const ping = await redis.ping();
+    const ping = await timeout(redis.ping(), 2000);
     checks.redis = ping === 'PONG' ? 'healthy' : 'unhealthy';
   } catch (err: any) {
-    checks.redis = `unhealthy: ${err.message}`;
+    checks.redis = `unhealthy (${err.message})`;
   }
 
   try {
     const esClient = ElasticsearchService.getClient();
-    const esPing = await esClient.ping();
+    const esPing = await timeout(esClient.ping(), 2000);
     checks.elasticsearch = esPing ? 'healthy' : 'unhealthy';
   } catch (err: any) {
-    checks.elasticsearch = `unhealthy: ${err.message}`;
+    checks.elasticsearch = `unhealthy (${err.message})`;
   }
 
   const isAllHealthy = checks.database === 'healthy' && checks.redis === 'healthy';

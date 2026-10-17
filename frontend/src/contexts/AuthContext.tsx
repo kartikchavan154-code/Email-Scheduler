@@ -46,12 +46,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const devLogin = async (email = 'demo@reachinbox.test', name = 'ReachInbox Demo') => {
+  const devLogin = async (email = 'oliver.brown@domain.io', name = 'Oliver Brown') => {
     setLoading(true);
     try {
       const res = await api.post('/auth/dev-login', { email, name });
       if (res.data.success && res.data.data.user) {
-        setUser(res.data.data.user);
+        setUser({
+          ...res.data.data.user,
+          avatarUrl: '/oliver-brown.jpg',
+        });
       }
     } finally {
       setLoading(false);

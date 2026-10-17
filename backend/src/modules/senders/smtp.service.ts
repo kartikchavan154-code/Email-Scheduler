@@ -65,6 +65,9 @@ export class SmtpService {
         user,
         pass,
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
       pool: true,
       maxConnections: 5,
       maxMessages: 100,

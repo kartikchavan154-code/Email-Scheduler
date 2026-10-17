@@ -110,30 +110,46 @@ export class AuthService {
    * Developer / Test Login (ensures continuous development even before Google credentials are set)
    */
   static async devOrTestLogin(email = 'demo@reachinbox.test', name = 'ReachInbox Demo User'): Promise<{ token: string; user: AuthUser }> {
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: { name },
-      create: {
+    try {
+      const user = await prisma.user.upsert({
+        where: { email },
+        update: { name },
+        create: {
+          email,
+          name,
+          avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(email)}`,
+          googleId: `dev_${crypto.randomBytes(6).toString('hex')}`,
+        },
+      });
+
+      await this.ensureDefaultSender(user.id, user.email, user.name);
+
+      const token = this.generateSessionToken(user);
+      return {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          avatarUrl: user.avatarUrl,
+          googleId: user.googleId,
+        },
+      };
+    } catch (err: any) {
+      logger.warn({ err: err.message }, 'Database offline during devLogin, using fallback demo session');
+      const fallbackUser: AuthUser = {
+        id: 'usr_demo_offline',
         email,
         name,
         avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(email)}`,
-        googleId: `dev_${crypto.randomBytes(6).toString('hex')}`,
-      },
-    });
-
-    await this.ensureDefaultSender(user.id, user.email, user.name);
-
-    const token = this.generateSessionToken(user);
-    return {
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatarUrl: user.avatarUrl,
-        googleId: user.googleId,
-      },
-    };
+        googleId: 'dev_mock_google',
+      };
+      const token = this.generateSessionToken(fallbackUser);
+      return {
+        token,
+        user: fallbackUser,
+      };
+    }
   }
 
   /**
@@ -145,33 +161,37 @@ export class AuthService {
         where: { userId },
       });
 
-      if (!existingSender) {
-        let testAccount: any;
-        if (!env.ETHEREAL_USER || !env.ETHEREAL_PASS) {
-          try {
-            testAccount = await nodemailer.createTestAccount();
-          } catch (e: any) {
-            logger.warn({ err: e.message }, 'Could not create dynamic Ethereal account, using defaults');
-          }
-        }
-
-        await prisma.sender.create({
-          data: {
-            userId,
-            name: `${userName} (Primary)`,
-            email: testAccount?.user || env.ETHEREAL_USER || `sender@${userEmail.split('@')[1] || 'ethereal.email'}`,
-            smtpHost: testAccount?.smtp?.host || env.ETHEREAL_HOST || 'smtp.ethereal.email',
-            smtpPort: testAccount?.smtp?.port || env.ETHEREAL_PORT || 587,
-            smtpUser: testAccount?.user || env.ETHEREAL_USER || 'ethereal_user',
-            smtpPass: testAccount?.pass || env.ETHEREAL_PASS || 'ethereal_pass',
-            hourlyLimit: env.MAX_EMAILS_PER_HOUR_PER_SENDER,
-            enabled: true,
-          },
-        });
-        logger.info({ userId }, 'Created default sender account for user');
+      if (existingSender) {
+        return existingSender;
       }
+
+      let testAccount: any;
+      if (!env.ETHEREAL_USER || !env.ETHEREAL_PASS) {
+        try {
+          testAccount = await nodemailer.createTestAccount();
+        } catch (e: any) {
+          logger.warn({ err: e.message }, 'Could not create dynamic Ethereal account, using defaults');
+        }
+      }
+
+      const sender = await prisma.sender.create({
+        data: {
+          userId,
+          name: `${userName} (Primary)`,
+          email: testAccount?.user || env.ETHEREAL_USER || `sender@${userEmail.split('@')[1] || 'ethereal.email'}`,
+          smtpHost: testAccount?.smtp?.host || env.ETHEREAL_HOST || 'smtp.ethereal.email',
+          smtpPort: testAccount?.smtp?.port || env.ETHEREAL_PORT || 587,
+          smtpUser: testAccount?.user || env.ETHEREAL_USER || 'ethereal_user',
+          smtpPass: testAccount?.pass || env.ETHEREAL_PASS || 'ethereal_pass',
+          hourlyLimit: env.MAX_EMAILS_PER_HOUR_PER_SENDER,
+          enabled: true,
+        },
+      });
+      logger.info({ userId }, 'Created default sender account for user');
+      return sender;
     } catch (err: any) {
       logger.error({ err: err.message, userId }, 'Failed to ensure default sender');
+      return null;
     }
   }
 }

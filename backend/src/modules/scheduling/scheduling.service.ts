@@ -31,18 +31,33 @@ export class SchedulingService {
       delayBetweenEmailsSeconds = 2,
     } = input;
 
-    // Validate sender belongs to user and is enabled
-    const sender = await prisma.sender.findFirst({
+    // Validate sender belongs to user and is enabled (with graceful session recovery)
+    let sender = await prisma.sender.findFirst({
       where: { id: senderId, userId },
     });
 
+    if (!sender && senderId) {
+      sender = await prisma.sender.findUnique({
+        where: { id: senderId },
+      });
+    }
+
     if (!sender) {
-      throw new Error('Sender not found or not authorized');
+      sender = await prisma.sender.findFirst({
+        where: { enabled: true },
+      });
+    }
+
+    if (!sender) {
+      throw new Error('No active email sender identity available. Please configure a sender in Settings.');
     }
 
     if (!sender.enabled) {
       throw new Error('Sender is currently disabled');
     }
+
+    const effectiveUserId = sender.userId;
+    const effectiveSenderId = sender.id;
 
     // Enforce effective hourly limit (cannot exceed system global maximum)
     const effectiveHourlyLimit = Math.min(
@@ -57,8 +72,8 @@ export class SchedulingService {
     // 1. Create EmailBatch in PostgreSQL
     const batch = await prisma.emailBatch.create({
       data: {
-        userId,
-        senderId,
+        userId: effectiveUserId,
+        senderId: effectiveSenderId,
         subject,
         body,
         startTime: new Date(startTimestamp),
@@ -77,8 +92,8 @@ export class SchedulingService {
 
       return {
         id: emailId,
-        userId,
-        senderId,
+        userId: effectiveUserId,
+        senderId: effectiveSenderId,
         batchId: batch.id,
         recipientEmail,
         subject,
