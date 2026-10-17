@@ -1,11 +1,11 @@
-﻿services:
+services:
   - type: web
     name: reachinbox-backend
     runtime: node
     region: oregon
     plan: free
     rootDir: backend
-    buildCommand: npm install && npm run build && npx prisma generate
+    buildCommand: npm install --include=dev && npm run build && npx prisma generate
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
