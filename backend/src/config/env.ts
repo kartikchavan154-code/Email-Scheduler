@@ -12,7 +12,9 @@ const envSchema = z.object({
   BACKEND_URL: z.string().url().default('http://localhost:5000'),
 
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  DIRECT_URL: z.string().optional(),
   REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
+
   ELASTICSEARCH_NODE: z.string().url().default('http://localhost:9200'),
 
   SESSION_SECRET: z.string().min(16, 'SESSION_SECRET must be at least 16 chars'),

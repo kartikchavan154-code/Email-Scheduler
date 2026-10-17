@@ -1,4 +1,4 @@
-services:
+﻿services:
   - type: web
     name: reachinbox-backend
     runtime: node
@@ -14,25 +14,25 @@ services:
       - key: PORT
         value: 10000
       - key: DATABASE_URL
-        fromDatabase:
-          name: reachinbox-db
-          property: connectionString
+        sync: false  # Neon pooled URL: postgresql://neondb_owner:...@...-pooler...neon.tech/neondb?sslmode=require
+      - key: DIRECT_URL
+        sync: false  # Same as DATABASE_URL for Neon pooler
       - key: REDIS_URL
-        sync: false
+        sync: false  # Upstash Redis URL: rediss://default:...
       - key: FRONTEND_URL
-        sync: false
+        sync: false  # https://<your-app>.vercel.app
       - key: BACKEND_URL
-        sync: false
+        sync: false  # https://<your-api>.onrender.com
       - key: SESSION_SECRET
         generateValue: true
       - key: ENCRYPTION_KEY
-        sync: false
+        sync: false  # 64-char hex string
       - key: GOOGLE_CLIENT_ID
         value: 940090647553-9bu57m9cm1goa965ei2eo9501j5q8vhh.apps.googleusercontent.com
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: GOOGLE_CALLBACK_URL
-        sync: false
+        sync: false  # https://<your-api>.onrender.com/api/auth/google/callback
       - key: SLACK_CLIENT_ID
         value: mock_or_real_slack_client_id
       - key: SLACK_CLIENT_SECRET
@@ -63,10 +63,3 @@ services:
         sync: false
       - key: ELASTICSEARCH_NODE
         value: http://localhost:9200
-
-databases:
-  - name: reachinbox-db
-    databaseName: reachinbox
-    user: reachinbox
-    plan: free
-    region: oregon
