@@ -1,0 +1,72 @@
+services:
+  - type: web
+    name: reachinbox-backend
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build && npx prisma generate
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: reachinbox-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        value: 940090647553-9bu57m9cm1goa965ei2eo9501j5q8vhh.apps.googleusercontent.com
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: SLACK_CLIENT_ID
+        value: mock_or_real_slack_client_id
+      - key: SLACK_CLIENT_SECRET
+        value: mock_or_real_slack_client_secret
+      - key: SLACK_CALLBACK_URL
+        sync: false
+      - key: SLACK_NOTIFICATIONS_ENABLED
+        value: "true"
+      - key: ETHEREAL_HOST
+        value: smtp.ethereal.email
+      - key: ETHEREAL_PORT
+        value: "587"
+      - key: ETHEREAL_USER
+        value: ""
+      - key: ETHEREAL_PASS
+        value: ""
+      - key: WORKER_CONCURRENCY
+        value: "3"
+      - key: MIN_DELAY_BETWEEN_SENDS_MS
+        value: "2000"
+      - key: MAX_EMAILS_PER_HOUR_PER_SENDER
+        value: "200"
+      - key: RATE_LIMIT_TIMEZONE
+        value: UTC
+      - key: BULL_BOARD_USERNAME
+        value: admin
+      - key: BULL_BOARD_PASSWORD
+        sync: false
+      - key: ELASTICSEARCH_NODE
+        value: http://localhost:9200
+
+databases:
+  - name: reachinbox-db
+    databaseName: reachinbox
+    user: reachinbox
+    plan: free
+    region: oregon
