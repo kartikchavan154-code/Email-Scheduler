@@ -17,6 +17,9 @@ import { setupBullBoard } from './modules/queue/bull-board';
 export function createApp() {
   const app = express();
 
+  // Trust first proxy (Render load balancer) so req.secure and HTTPS cookies work properly
+  app.set('trust proxy', 1);
+
   // Security headers
   app.use(
     helmet({

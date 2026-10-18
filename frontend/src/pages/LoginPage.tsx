@@ -10,8 +10,8 @@ export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = () => {
-    // If backend Google OAuth is configured, redirect; otherwise quick login
-    window.location.href = '/api/auth/google';
+    const backendUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://email-scheduler-f59i.onrender.com' : '');
+    window.location.href = `${backendUrl}/api/auth/google`;
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {

@@ -4,7 +4,7 @@ import axios from 'axios';
 // In dev the Vite proxy forwards /api → localhost:5000.
 const baseURL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
-  : '/api';
+  : (import.meta.env.PROD ? 'https://email-scheduler-f59i.onrender.com/api' : '/api');
 
 export const api = axios.create({
   baseURL,

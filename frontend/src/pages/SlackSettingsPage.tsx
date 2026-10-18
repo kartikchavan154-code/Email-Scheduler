@@ -26,7 +26,8 @@ export const SlackSettingsPage: React.FC = () => {
   }, []);
 
   const handleConnectSlack = () => {
-    window.location.href = '/api/slack/connect';
+    const backendUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://email-scheduler-f59i.onrender.com' : '');
+    window.location.href = `${backendUrl}/api/slack/connect`;
   };
 
   const handleDisconnectSlack = async () => {
